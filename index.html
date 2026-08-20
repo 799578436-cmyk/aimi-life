@@ -441,7 +441,7 @@ function tryPushCloud(){
 }
 
 function syncNow(){ if(hasCloud()){pushCloudNow();tryPullCloud();} else if(ghHas()){ghPush();ghPull();} }
-function pullFromCloud(){ if(hasCloud())tryPullCloud(); else if(ghHas())ghPull(); }
+function pullFromCloud(){ if(hasCloud())tryPullCloud(); else if(ghHas())ghPull(true); }
 
 /* ============== GitHub Gist 同步通道（免登录版专用） ============== */
 let _ghToken='', _ghGistId='';
@@ -465,7 +465,11 @@ async function ghGetOrCreateGist(){
   try{
     const gists=await ghApi('/gists?per_page=100');
     const found=(gists||[]).find(g=>g.files&&g.files['aimi-life.json']);
-    if(found){_ghGistId=found.id;try{localStorage.setItem('wb_gh_gist',_ghGistId);}catch(e){}return found;}
+    if(found){
+      _ghGistId=found.id;try{localStorage.setItem('wb_gh_gist',_ghGistId);}catch(e){}
+      // 列表接口不含文件内容，重新拉单个 gist 拿 content
+      return await ghApi('/gists/'+found.id);
+    }
   }catch(e){}
   // 没有则创建一个私有 gist
   const created=await ghApi('/gists',{method:'POST',body:{description:'艾米人生管理系统 自动同步数据（勿删）',public:false,files:{'aimi-life.json':{content:JSON.stringify(S,null,1)}}}});
@@ -473,7 +477,7 @@ async function ghGetOrCreateGist(){
   try{localStorage.setItem('wb_gh_gist',_ghGistId);}catch(e){}
   return created;
 }
-async function ghPull(){
+async function ghPull(force){
   if(!ghHas()||_pulling) return;
   _pulling=true;
   _cloudStatus='pulling'; _cloudMsg=''; updateCloudUI();
@@ -488,18 +492,18 @@ async function ghPull(){
     const cloudTs=f.updated_at?new Date(f.updated_at).getTime():0;
     const localTs=S._localUpdated?new Date(S._localUpdated).getTime():0;
     _cloudLastSync=f.updated_at||'';
-    if(cloudTs>localTs+1000){
+    if(force||cloudTs>localTs+1000){
       const json=JSON.parse(f.content);
       if(json&&json.annual){
         S=json; localStorage.setItem(KEY,JSON.stringify(S));
-        _cloudStatus='synced'; _cloudMsg='已从云端拉取最新版本'; render();
+        _cloudStatus='synced'; _cloudMsg=(force?'已强制拉取云端版本':'已从云端拉取最新版本'); render();
       }else{_cloudStatus='error'; _cloudMsg='云端数据格式异常';}
     }else{
       _cloudStatus='synced'; _cloudMsg='本地已是最新';
       await ghPush(true);
     }
   }catch(e){
-    _cloudStatus='error'; _cloudMsg='GitHub连接失败：'+(e&&e.message||String(e));
+    _cloudStatus='error'; _cloudMsg='同步失败：'+(e&&e.message||String(e));
   }
   _pulling=false; updateCloudUI();
 }
@@ -530,7 +534,7 @@ function ghSaveCfg(){
   const t=el.value.trim();
   _ghToken=t;
   try{localStorage.setItem('wb_gh_token',t);}catch(e){}
-  if(t) ghPull(); else _cloudStatus='off';
+  if(t) ghPull(true); else _cloudStatus='off';
   updateCloudUI(); refreshCloudPanel();
 }
 function ghClearCfg(){
