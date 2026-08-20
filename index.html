@@ -440,7 +440,7 @@ function tryPushCloud(){
   _pushTimer=setTimeout(()=>{pushCloudNow();},2000);  // 2秒防抖
 }
 
-function syncNow(){ if(hasCloud()){pushCloudNow();tryPullCloud();} else if(ghHas()){ghPush();ghPull();} }
+function syncNow(){ if(hasCloud())tryPullCloud(); else if(ghHas())ghPull(true).then(()=>ghPush()); }
 function pullFromCloud(){ if(hasCloud())tryPullCloud(); else if(ghHas())ghPull(true); }
 
 /* ============== GitHub Gist 同步通道（免登录版专用） ============== */
