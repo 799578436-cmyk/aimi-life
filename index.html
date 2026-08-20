@@ -1668,7 +1668,14 @@ function openSettings(){
       '<button class="btn sm" onclick="ghSaveCfg()">'+icon('check')+' 保存并连接</button>'+
       (ghHas()?'<button class="btn ghost sm" onclick="ghClearCfg()">断开</button>':'')+
     '</div>'+
-    '<div class="tip" style="margin-top:6px">没 Token？在电脑浏览器打开 <b>github.com/settings/tokens</b> → Generate new token → 勾选 <b>gist</b> 权限 → 生成后复制过来。</div>'
+    '<div class="tip" style="margin-top:6px">没 Token？在电脑浏览器打开 <b>github.com/settings/tokens</b> → Generate new token → 勾选 <b>gist</b> 权限 → 生成后复制过来。</div>'+
+    (ghHas()?(
+      '<div class="row" style="margin-top:8px">'+
+        '<button class="btn sm" onclick="syncNow()">'+icon('refresh')+' 立即同步</button>'+
+        '<button class="btn gold sm" onclick="pullFromCloud()">'+icon('down')+' 拉取云端覆盖本地</button>'+
+      '</div>'+
+      '<div class="tip" style="margin-top:6px">点击「拉取云端覆盖本地」= 用云端最新数据覆盖本设备（新设备/数据错乱时用）。</div>'
+    ):'')
   );
 
   const cloudBox = hasCloud() ? (
