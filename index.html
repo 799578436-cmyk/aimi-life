@@ -489,9 +489,10 @@ async function ghPull(force){
       await ghPush(true);
       _pulling=false; return;
     }
-    const cloudTs=f.updated_at?new Date(f.updated_at).getTime():0;
+    // 注意：GitHub 单 gist API 的文件对象没有 updated_at，时间戳在 gist 顶层
+    const cloudTs=g.updated_at?new Date(g.updated_at).getTime():0;
     const localTs=S._localUpdated?new Date(S._localUpdated).getTime():0;
-    _cloudLastSync=f.updated_at||'';
+    _cloudLastSync=g.updated_at||'';
     if(force||cloudTs>localTs+1000){
       const json=JSON.parse(f.content);
       if(json&&json.annual){
